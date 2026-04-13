@@ -168,25 +168,52 @@ def main():
     tmpdir = tempfile.mkdtemp(prefix="gitgraffiti-")
     subprocess.run(["git", "init", "-q"], cwd=tmpdir, check=True)
 
+    # GitHub limits how many commits per push count toward the contribution
+    # graph. Push in batches to ensure all commits are counted.
+    BATCH_SIZE = 500
+    commit_count = 0
+    first_push = True
+
+    if args.repo:
+        subprocess.run(["git", "remote", "add", "origin", args.repo], cwd=tmpdir, check=True)
+        subprocess.run(["git", "branch", "-M", "main"], cwd=tmpdir, check=True)
+
     for di, date in enumerate(dates):
         for i in range(args.intensity):
             hour = (i * 3) % 24
-            ts = f"{date}T{hour:02d}:00:00"
+            minute = (i * 7) % 60
+            ts = f"{date}T{hour:02d}:{minute:02d}:00"
             env = {**os.environ, "GIT_AUTHOR_DATE": ts, "GIT_COMMITTER_DATE": ts}
             subprocess.run(
                 ["git", "commit", "-q", "--allow-empty", "-m", f"gitgraffiti {date} #{i}"],
                 cwd=tmpdir, env=env, check=True,
                 capture_output=True,
             )
-        sys.stdout.write(f"\r  Committed: {date} ({di + 1}/{len(dates)})")
+            commit_count += 1
+
+            # Push in batches so GitHub processes all contributions
+            if args.repo and commit_count % BATCH_SIZE == 0:
+                push_flags = ["-uf"] if first_push else ["-u"]
+                subprocess.run(
+                    ["git", "push"] + push_flags + ["origin", "main"],
+                    cwd=tmpdir, check=True, capture_output=True,
+                )
+                first_push = False
+                sys.stdout.write(f"\r  Pushed batch ({commit_count}/{total} commits)")
+                sys.stdout.flush()
+
+        sys.stdout.write(f"\r  Committed: {date} ({di + 1}/{len(dates)})    ")
         sys.stdout.flush()
     print()
 
     if args.repo:
-        print(f"\n  Pushing to {args.repo} ...")
-        subprocess.run(["git", "remote", "add", "origin", args.repo], cwd=tmpdir, check=True)
-        subprocess.run(["git", "branch", "-M", "main"], cwd=tmpdir, check=True)
-        subprocess.run(["git", "push", "-uf", "origin", "main"], cwd=tmpdir, check=True)
+        # Push any remaining commits
+        if commit_count % BATCH_SIZE != 0:
+            push_flags = ["-uf"] if first_push else ["-u"]
+            subprocess.run(
+                ["git", "push"] + push_flags + ["origin", "main"],
+                cwd=tmpdir, check=True,
+            )
         print("  Done! Check your profile in a few minutes.")
         import shutil
         shutil.rmtree(tmpdir)
