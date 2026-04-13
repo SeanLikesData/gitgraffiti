@@ -169,10 +169,16 @@ def main():
     tmpdir = tempfile.mkdtemp(prefix="gitgraffiti-")
     subprocess.run(["git", "init", "-q"], cwd=tmpdir, check=True)
 
-    # GitHub limits how many commits per push count toward the contribution
-    # graph. Push in small batches with delays to ensure all commits are counted.
-    BATCH_SIZE = 300
-    BATCH_DELAY = 10  # seconds between pushes
+    # Write a trackable file — GitHub is more reliable counting commits
+    # with real file changes vs --allow-empty.
+    log_path = os.path.join(tmpdir, "graffiti.log")
+    with open(log_path, "w") as f:
+        f.write("")
+    subprocess.run(["git", "add", "graffiti.log"], cwd=tmpdir, check=True)
+
+    # Push in small batches with delays to avoid GitHub rate limits.
+    BATCH_SIZE = 200
+    BATCH_DELAY = 15  # seconds between pushes
     commit_count = 0
     first_push = True
 
@@ -186,8 +192,14 @@ def main():
             minute = (i * 7) % 60
             ts = f"{date}T{hour:02d}:{minute:02d}:00"
             env = {**os.environ, "GIT_AUTHOR_DATE": ts, "GIT_COMMITTER_DATE": ts}
+
+            # Write a real file change for each commit
+            with open(log_path, "a") as f:
+                f.write(f"{date} #{i}\n")
+            subprocess.run(["git", "add", "graffiti.log"], cwd=tmpdir, check=True,
+                           capture_output=True)
             subprocess.run(
-                ["git", "commit", "-q", "--allow-empty", "-m", f"gitgraffiti {date} #{i}"],
+                ["git", "commit", "-q", "-m", f"gitgraffiti {date} #{i}"],
                 cwd=tmpdir, env=env, check=True,
                 capture_output=True,
             )
