@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""grass - paint words on your GitHub contribution graph by backdating commits."""
+"""gitgraffiti - paint words on your GitHub contribution graph by backdating commits."""
 
 import argparse
 import datetime
@@ -108,7 +108,7 @@ def get_start_sunday(year):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="grass - paint words on your GitHub contribution graph"
+        description="gitgraffiti - paint words on your GitHub contribution graph"
     )
     parser.add_argument("text", help="Text to display")
     parser.add_argument("--repo", help="GitHub repo URL to push to")
@@ -165,7 +165,7 @@ def main():
         return
 
     # Create temp repo and make commits
-    tmpdir = tempfile.mkdtemp(prefix="grass-")
+    tmpdir = tempfile.mkdtemp(prefix="gitgraffiti-")
     subprocess.run(["git", "init", "-q"], cwd=tmpdir, check=True)
 
     for di, date in enumerate(dates):
@@ -174,7 +174,7 @@ def main():
             ts = f"{date}T{hour:02d}:00:00"
             env = {**os.environ, "GIT_AUTHOR_DATE": ts, "GIT_COMMITTER_DATE": ts}
             subprocess.run(
-                ["git", "commit", "-q", "--allow-empty", "-m", f"grass {date} #{i}"],
+                ["git", "commit", "-q", "--allow-empty", "-m", f"gitgraffiti {date} #{i}"],
                 cwd=tmpdir, env=env, check=True,
                 capture_output=True,
             )
