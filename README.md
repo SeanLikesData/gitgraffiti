@@ -31,6 +31,7 @@ python3 gitgraffiti.py "HIRE ME" --repo git@github.com:you/some-repo.git --year 
 
 ## Tips
 
+- Works best on a **year with no existing commits** — otherwise your text will blend into the noise
 - Use a **dedicated empty repo** for this — you don't want 1000+ empty commits in a real project
 - The graph is 52 columns wide. Most 5-6 letter words fit comfortably; 8 is the max
 - If your profile already has commits that year, bump `--intensity` so the text stands out
