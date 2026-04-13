@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 
 # 5×7 pixel font. Each char = list of 7 rows, each row = 5-bit int (MSB = left).
 FONT = {
@@ -169,8 +170,9 @@ def main():
     subprocess.run(["git", "init", "-q"], cwd=tmpdir, check=True)
 
     # GitHub limits how many commits per push count toward the contribution
-    # graph. Push in batches to ensure all commits are counted.
-    BATCH_SIZE = 500
+    # graph. Push in small batches with delays to ensure all commits are counted.
+    BATCH_SIZE = 300
+    BATCH_DELAY = 10  # seconds between pushes
     commit_count = 0
     first_push = True
 
@@ -199,8 +201,9 @@ def main():
                     cwd=tmpdir, check=True, capture_output=True,
                 )
                 first_push = False
-                sys.stdout.write(f"\r  Pushed batch ({commit_count}/{total} commits)")
+                sys.stdout.write(f"\r  Pushed batch ({commit_count}/{total} commits), waiting {BATCH_DELAY}s...")
                 sys.stdout.flush()
+                time.sleep(BATCH_DELAY)
 
         sys.stdout.write(f"\r  Committed: {date} ({di + 1}/{len(dates)})    ")
         sys.stdout.flush()
