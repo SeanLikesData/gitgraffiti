@@ -38,6 +38,14 @@ python3 gitgraffiti.py "HIRE ME" --repo git@github.com:you/some-repo.git --year 
 - Use `--spacing 0` to squeeze in longer text
 - Supports A-Z, 0-9, and a few symbols: `! - . _ #`
 
+## Use with an AI agent
+
+If you use [Claude Code](https://claude.ai/code), Codex, or another AI coding agent, just clone this repo and ask your agent to use it. The included `CLAUDE.md` and `AGENTS.md` files give your agent everything it needs to preview text, create a repo, and push the commits for you.
+
+```
+> use gitgraffiti to write "HIRE ME" on my 2023 github profile
+```
+
 ## Requirements
 
 Python 3.6+ and git. No dependencies.
