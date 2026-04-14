@@ -114,8 +114,8 @@ def main():
     parser.add_argument("text", help="Text to display")
     parser.add_argument("--repo", help="GitHub repo URL to push to")
     parser.add_argument("--year", type=int, default=datetime.date.today().year)
-    parser.add_argument("--intensity", type=int, default=30,
-                        help="Commits per active cell (default: 30)")
+    parser.add_argument("--intensity", type=int, default=1,
+                        help="Commits per active cell (default: 1, increase if year has existing activity)")
     parser.add_argument("--spacing", type=int, default=1,
                         help="Blank columns between letters (default: 1)")
     parser.add_argument("--dry-run", action="store_true",
