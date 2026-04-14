@@ -169,22 +169,34 @@ def main():
     tmpdir = tempfile.mkdtemp(prefix="gitgraffiti-")
     subprocess.run(["git", "init", "-q"], cwd=tmpdir, check=True)
 
+    # If pushing to an existing repo, clone its history first so we
+    # append commits instead of force-pushing over previous years.
+    has_remote_history = False
+    if args.repo:
+        subprocess.run(["git", "remote", "add", "origin", args.repo], cwd=tmpdir, check=True)
+        result = subprocess.run(
+            ["git", "fetch", "origin", "main"],
+            cwd=tmpdir, capture_output=True,
+        )
+        if result.returncode == 0:
+            subprocess.run(["git", "checkout", "main"], cwd=tmpdir,
+                           check=True, capture_output=True)
+            has_remote_history = True
+        else:
+            subprocess.run(["git", "branch", "-M", "main"], cwd=tmpdir, check=True)
+
     # Write a trackable file — GitHub is more reliable counting commits
     # with real file changes vs --allow-empty.
     log_path = os.path.join(tmpdir, "graffiti.log")
-    with open(log_path, "w") as f:
-        f.write("")
-    subprocess.run(["git", "add", "graffiti.log"], cwd=tmpdir, check=True)
+    if not os.path.exists(log_path):
+        with open(log_path, "w") as f:
+            f.write("")
+        subprocess.run(["git", "add", "graffiti.log"], cwd=tmpdir, check=True)
 
     # Push in small batches with delays to avoid GitHub rate limits.
     BATCH_SIZE = 200
     BATCH_DELAY = 15  # seconds between pushes
     commit_count = 0
-    first_push = True
-
-    if args.repo:
-        subprocess.run(["git", "remote", "add", "origin", args.repo], cwd=tmpdir, check=True)
-        subprocess.run(["git", "branch", "-M", "main"], cwd=tmpdir, check=True)
 
     for di, date in enumerate(dates):
         for i in range(args.intensity):
@@ -207,12 +219,10 @@ def main():
 
             # Push in batches so GitHub processes all contributions
             if args.repo and commit_count % BATCH_SIZE == 0:
-                push_flags = ["-uf"] if first_push else ["-u"]
                 subprocess.run(
-                    ["git", "push"] + push_flags + ["origin", "main"],
+                    ["git", "push", "-u", "origin", "main"],
                     cwd=tmpdir, check=True, capture_output=True,
                 )
-                first_push = False
                 sys.stdout.write(f"\r  Pushed batch ({commit_count}/{total} commits), waiting {BATCH_DELAY}s...")
                 sys.stdout.flush()
                 time.sleep(BATCH_DELAY)
@@ -224,9 +234,8 @@ def main():
     if args.repo:
         # Push any remaining commits
         if commit_count % BATCH_SIZE != 0:
-            push_flags = ["-uf"] if first_push else ["-u"]
             subprocess.run(
-                ["git", "push"] + push_flags + ["origin", "main"],
+                ["git", "push", "-u", "origin", "main"],
                 cwd=tmpdir, check=True,
             )
         print("  Done! Check your profile in a few minutes.")
