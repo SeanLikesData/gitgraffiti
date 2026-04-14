@@ -10,7 +10,6 @@ Paint words on your GitHub contribution graph.
 Your GitHub profile shows a grid of green squares — one per day, darker = more commits. gitgraffiti treats this grid as a 7×52 pixel display, renders your text with a built-in pixel font, and creates backdated commits on the right days. Push to any repo on your account and your profile spells out whatever you want.
 
 ![I CODE written on a GitHub contribution graph](grass_I_Code.png)
-![HI SEAN written on a GitHub contribution graph](hi-sean.png)
 
 ## Usage
 
@@ -32,6 +31,8 @@ python3 gitgraffiti.py "HIRE ME" --repo git@github.com:you/some-repo.git --year 
 | `--spacing N` | Blank columns between letters | 1 |
 | `--align` | `left`, `center`, or `right` | `center` |
 | `--dry-run` | Preview the grid, don't commit | |
+
+![HI SEAN written on a GitHub contribution graph](hi-sean.png)
 
 ## Tips
 
